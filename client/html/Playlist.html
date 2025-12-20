@@ -39,6 +39,26 @@
         </div>
     </div>
 </header>
+<!-- Upload song modal -->
+<div id="uploadModal" class="upload-modal">
+  <div class="upload-box">
+    <h3>Đăng bài hát</h3>
+
+    <input type="text" id="songTitle" placeholder="Tên bài hát">
+    <input type="text" id="songArtist" placeholder="Nghệ sĩ">
+
+    <label>Ảnh bài hát</label>
+    <input type="file" id="songImage" accept="image/*">
+
+    <label>File nhạc</label>
+    <input type="file" id="songAudio" accept="audio/*">
+
+    <div class="upload-actions">
+      <button id="uploadBtn">Tải lên</button>
+      <button id="closeModal">Huỷ</button>
+    </div>
+  </div>
+</div>
 
 
   <div class="playlist-container">
@@ -63,6 +83,7 @@
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
 
   <!-- JS Playlist -->
   <script src="../js/playlist.js"></script>

@@ -1,6 +1,6 @@
-if (localStorage.getItem("currentUser")) {
-  location.href = "./index.html";
-}
+// if (localStorage.getItem("currentUser")) {
+//   location.href = "./inde.html";
+// }
 
 let form = document.querySelector("form");//Tìm và chọn thẻ <form> đầu tiên trong trang HTML
 form.addEventListener("submit", (e) => {

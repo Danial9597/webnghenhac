@@ -10,8 +10,9 @@ const firebaseConfig = {
 
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+const storage = firebase.storage();
 
-// Xoá bài hát
+// ================== XOÁ BÀI HÁT ==================
 async function deleteProduct(id) {
     try {
         await db.collection("Music").doc(id).delete();
@@ -21,7 +22,7 @@ async function deleteProduct(id) {
     }
 }
 
-// Load danh sách bài hát
+// ================== LOAD PLAYLIST ==================
 async function loadProducts() {
     const productTableBody = document.getElementById("product-list");
     let htmls = "";
@@ -33,7 +34,6 @@ async function loadProducts() {
         querySnapshot.forEach((doc) => {
             const product = doc.data();
 
-            // ép JSON để tránh bị lỗi nháy kép
             const songData = {
                 id: doc.id,
                 image: product.image,
@@ -43,7 +43,7 @@ async function loadProducts() {
             };
 
             htmls += `
-            <tr class="song-row" data-song='${JSON.stringify(songData).replace(/'/g, "&apos;")}'>
+            <tr class="song-row" data-song='${JSON.stringify(songData).replace(/'/g, "&apos;")}' >
                 <th>${index}</th>
                 <td><img src="${product.image}" alt="${product.title}"></td>
                 <td>${product.title}</td>
@@ -64,23 +64,19 @@ async function loadProducts() {
         rows.forEach(row => {
             row.addEventListener("click", () => {
                 let songData = row.dataset.song;
-                songData = songData.replace(/&apos;/g, "'"); // sửa lỗi nháy kép
+                songData = songData.replace(/&apos;/g, "'");
 
                 const song = JSON.parse(songData);
-
-                // lưu vào localStorage
                 localStorage.setItem("currentSong", JSON.stringify(song));
-
-                // chuyển trang
                 window.location.href = "product.html";
             });
         });
 
-        // NÚT XOÁ (không bị click vào row)
+        // NÚT XOÁ
         const btnDeleteProduct = document.querySelectorAll(".btn-delete-product");
         btnDeleteProduct.forEach(btn => {
             btn.addEventListener("click", async (e) => {
-                e.stopPropagation(); // ngăn chuyển trang
+                e.stopPropagation();
 
                 const id = btn.getAttribute("data-id");
                 if (confirm("Bạn có chắc muốn xoá bài hát này?")) {
@@ -96,3 +92,60 @@ async function loadProducts() {
 }
 
 loadProducts();
+
+// ================== UPLOAD BÀI HÁT ==================
+const uploadIcon = document.querySelector(".fa-pen-to-square");
+const uploadModal = document.getElementById("uploadModal");
+const closeModal = document.getElementById("closeModal");
+const uploadBtn = document.getElementById("uploadBtn");
+
+uploadIcon.addEventListener("click", () => {
+    uploadModal.style.display = "flex";
+});
+
+closeModal.addEventListener("click", () => {
+    uploadModal.style.display = "none";
+});
+
+uploadBtn.addEventListener("click", async () => {
+    const title = document.getElementById("songTitle").value.trim();
+    const artist = document.getElementById("songArtist").value.trim();
+    const imageFile = document.getElementById("songImage").files[0];
+    const audioFile = document.getElementById("songAudio").files[0];
+
+    if (!title || !artist || !imageFile || !audioFile) {
+        alert("Vui lòng nhập đầy đủ thông tin");
+        return;
+    }
+
+    try {
+        const imgRef = storage.ref("images/" + Date.now() + "_" + imageFile.name);
+        await imgRef.put(imageFile);
+        const imageUrl = await imgRef.getDownloadURL();
+
+        const audioRef = storage.ref("songs/" + Date.now() + "_" + audioFile.name);
+        await audioRef.put(audioFile);
+        const audioUrl = await audioRef.getDownloadURL();
+
+        await db.collection("Music").add({
+            title: title,
+            artist: artist,
+            image: imageUrl,
+            audioUrl: audioUrl
+        });
+
+        alert("Upload thành công 🎵");
+
+        document.getElementById("songTitle").value = "";
+        document.getElementById("songArtist").value = "";
+        document.getElementById("songImage").value = "";
+        document.getElementById("songAudio").value = "";
+
+        uploadModal.style.display = "none";
+        loadProducts();
+
+    } catch (error) {
+        console.error(error);
+        alert("Upload thất bại");
+    }
+});

@@ -12,23 +12,48 @@ app.get("/", (req, res) => {
   res.send("Send post request to /upload to upload image");
 });
 
-app.post("/upload", upload.single("image"), (req, res) => {
-  cloudinary.uploader.upload(req.file.path, (err, result) => {
-    if (err) {
-      console.log(err);
-      return res.status(500).json({
+app.post(
+  "/upload",
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "audio", maxCount: 1 },
+  ]),
+  (req, res) => {
+    const imageFile = req.files.image?.[0];
+    const audioFile = req.files.audio?.[0];
+
+    if (!imageFile || !audioFile) {
+      return res.status(400).json({
         success: false,
-        message: "Error",
+        message: "Missing image or audio file",
       });
     }
 
-    res.status(200).json({
-      success: true,
-      message: "Uploaded!",
-      data: result,
-    });
-  });
-});
+    cloudinary.uploader.upload(
+      imageFile.path,
+      { resource_type: "image" },
+      (err, imageResult) => {
+        if (err) return res.status(500).json({ message: "Image upload failed" });
+        
+        cloudinary.uploader.upload(
+          audioFile.path,
+          { resource_type: "video" },
+          (err, audioResult) => {
+            if (err) return res.status(500).json({ message: "Audio upload failed" });
+
+            res.json({
+              success: true,
+              imageUrl: imageResult.secure_url,
+              audioUrl: audioResult.secure_url,
+            });
+          }
+        );
+      }
+    );
+  }
+);
+
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`listening at http://localhost:${PORT}`));

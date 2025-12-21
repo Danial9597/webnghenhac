@@ -119,30 +119,53 @@ uploadBtn.addEventListener("click", async () => {
     }
 
     try {
-        const imgRef = storage.ref("images/" + Date.now() + "_" + imageFile.name);
-        await imgRef.put(imageFile);
-        const imageUrl = await imgRef.getDownloadURL();
+        // const imgRef = storage.ref("images/" + Date.now() + "_" + imageFile.name);
+        // await imgRef.put(imageFile);
+        // const imageUrl = await imgRef.getDownloadURL();
 
-        const audioRef = storage.ref("songs/" + Date.now() + "_" + audioFile.name);
-        await audioRef.put(audioFile);
-        const audioUrl = await audioRef.getDownloadURL();
+        // const audioRef = storage.ref("songs/" + Date.now() + "_" + audioFile.name);
+        // await audioRef.put(audioFile);
+        // const audioUrl = await audioRef.getDownloadURL();
 
-        await db.collection("Music").add({
-            title: title,
-            artist: artist,
-            image: imageUrl,
-            audioUrl: audioUrl
-        });
+        const formData = new FormData();
 
-        alert("Upload thành công 🎵");
+        formData.append("audio", audioFile);
+        formData.append("image", imageFile);
+        
+        fetch("http://localhost:3000/upload", {
+            method: "POST",
+            body: formData,
+        })
+        .then((response) => response.json())
+        .then((result) => {
+            const imageUrl = result.imageUrl;
+            const audioUrl = result.audioUrl;
+            
+            console.log(imageUrl)
+            console.log(audioUrl)
 
-        document.getElementById("songTitle").value = "";
-        document.getElementById("songArtist").value = "";
-        document.getElementById("songImage").value = "";
-        document.getElementById("songAudio").value = "";
-
-        uploadModal.style.display = "none";
-        loadProducts();
+            db.collection("Music").add({
+                title: title,
+                artist: artist,
+                image: imageUrl,
+                audioUrl: audioUrl
+            }).then(() => {
+                alert("Upload thành công 🎵");
+                document.getElementById("songTitle").value = "";
+                document.getElementById("songArtist").value = "";
+                document.getElementById("songImage").value = "";
+                document.getElementById("songAudio").value = "";
+                uploadModal.style.display = "none";
+                loadProducts();
+            }).catch((error) => {
+                console.error("Error uploading file:", error);
+                alert("Có lỗi xảy ra khi upload bài hát. Vui lòng thử lại!");
+            })
+        })
+        .catch((error) => {
+            console.error("Error uploading file:", error);
+            alert("Có lỗi xảy ra khi upload bài hát. Vui lòng thử lại!");
+        })
 
     } catch (error) {
         console.error(error);
